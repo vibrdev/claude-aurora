@@ -271,7 +271,7 @@ export const register: Register = on => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey) return next(e)
 
-    const { Box, Button, Text } = $.ui.resolve(e)
+    const { Box, Text } = $.ui.resolve(e)
     const session = await read($, meter)
     const turns = await read($, stats)
     const minutes = await read($, cacheMinutes)
@@ -306,7 +306,7 @@ export const register: Register = on => {
         )}
         {turns.turns > 0 && (
           <Text size="caption" color="text" tabular>
-            {count(turns.tokensIn + turns.tokensOut)} tokens
+            {count(turns.tokensIn - turns.tokensCached + turns.tokensOut)} tokens
           </Text>
         )}
         {turns.turns > 0 && (
@@ -315,14 +315,6 @@ export const register: Register = on => {
             {turns.lastCachedPercent === null ? '' : ` · ${turns.lastCachedPercent}% cached`}
           </Text>
         )}
-        <Button
-          key="aurora-open"
-          plain
-          label="Details"
-          onPress={() => {
-            void $.ui.open({ id: PANE, title: PANE_TITLE })
-          }}
-        />
       </Box>
     )
   })
