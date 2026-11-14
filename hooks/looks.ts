@@ -65,6 +65,24 @@ export const LOOKS: readonly Look[] = [
       },
     },
   }),
+  look('lake', 'Lake', 'Sunset over still water, with reeds, a far shore and light on the clouds', {
+    label: 'Aurora Lake',
+    only: 'dark',
+    roles: { accent: '#ff9a52', danger: '#ff6161', success: '#7bd08d', warning: '#f2c14e', pro: '#b59cff' },
+    dark: {
+      gray: {
+        anchors: {
+          'surface-0': '#12131e',
+          'surface-1': '#181a27',
+          'surface-2': '#1e2030',
+          'surface-3': '#222536',
+          'text-primary': '#f3ede6',
+          'text-secondary': '#d2c9c2',
+          'text-muted': '#aaa09d',
+        },
+      },
+    },
+  }),
 ]
 
 export const DEFAULT_LOOK: SceneId = 'dusk'

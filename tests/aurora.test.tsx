@@ -45,7 +45,7 @@ test('session start sends colors and scene together, and the scene draws', async
       component: 'Backdrop',
       requestId: 'backdrop',
       surface,
-      props: { scene: 'dusk', plugin: 'aurora', glass: { blur: 6, opacity: 0.5 } } as never,
+      props: { scene: surface === 'desktop' ? 'lake' : 'dusk', plugin: 'aurora', glass: { blur: 6, opacity: 0.5 } } as never,
     })
 
     expect(await ui.find({ type: 'Svg' })).toBeDefined()
@@ -112,6 +112,7 @@ test('the band counts the prompt cache down and goes cold', async ($, on) => {
     },
   })
   expect(await pane.find({ key: 'look-night' })).toBeDefined()
+  expect(await pane.find({ key: 'look-lake' })).toBeDefined()
   expect(await pane.find({ type: 'Text', text: /d\.ts/ })).toBeDefined()
   await pane.press({ key: 'cache-5' })
   await pane.unmount()

@@ -1,3 +1,5 @@
+import { lake } from './lake'
+
 // The scenes behind the conversation: each one a self-contained SVG, drawn in a
 // 1600 by 1000 box and sliced to fill any window. The middle is kept calm for
 // the words, and the subject (sun, moon) sits off to the right above the ridge.
@@ -179,10 +181,10 @@ function night(): string {
   return frame(body, defs)
 }
 
-export type SceneId = 'dusk' | 'night'
+export type SceneId = 'dusk' | 'night' | 'lake'
 
 const drawn: { [id: string]: string } = {}
 
 export function sceneSvg(id: SceneId): string {
-  return (drawn[id] ??= id === 'night' ? night() : dusk())
+  return (drawn[id] ??= id === 'night' ? night() : id === 'lake' ? lake() : dusk())
 }
