@@ -1,6 +1,6 @@
 {
   "name": "aurora",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A drifting aurora backdrop with switchable scenes, a last-turn band above the prompt, and a session panel of tools used and files changed.",
   "types": "./types/index.d.ts"
 }

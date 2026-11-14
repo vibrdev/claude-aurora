@@ -34,18 +34,23 @@ function shortPath(path: string): string {
 }
 
 /** Paints the scene behind the conversation. The glass keeps the app's own panel color, so text stays readable in light and dark. */
-async function paint($: EngineInterface, id: string): Promise<void> {
+/** Resolves to why nothing draws the backdrop, or undefined when a surface does. */
+async function paint($: EngineInterface, id: string): Promise<string | undefined> {
   try {
-    await $.theme.set({ backdrop: { id, glass: { blur: 28, opacity: 0.72 } } })
-  } catch {
+    const set = await $.theme.set({ backdrop: { id, glass: { blur: 28, opacity: 0.72 } } })
+
+    return set.isDrawn ? undefined : set.reason
+  } catch (error) {
     // A build without themes: everything else of the mod still works.
+    return error instanceof Error ? error.message : 'this build has no themes'
   }
 }
 
-async function choose($: EngineInterface, id: string): Promise<void> {
+async function choose($: EngineInterface, id: string): Promise<string | undefined> {
   await update($, scene, () => id)
   await $.store.set('scene', id)
-  await paint($, id)
+
+  return paint($, id)
 }
 
 export const register: Register = on => {
@@ -77,9 +82,14 @@ export const register: Register = on => {
       return { text: `No scene named "${asked}". The scenes are ${SCENES.map(one => one.id).join(', ')}.` }
     }
 
-    await choose($, picked.id)
+    const undrawn = await choose($, picked.id)
 
-    return { text: `Backdrop set to ${picked.label}.` }
+    return {
+      text:
+        undrawn === undefined
+          ? `Backdrop set to ${picked.label}.`
+          : `Backdrop set to ${picked.label}, but nothing is drawing it here: ${undrawn}`,
+    }
   })
 
   on('command.run', { command: 'aurora' }, async $ => {
@@ -186,7 +196,9 @@ export const register: Register = on => {
                 key={`scene-${one.id}`}
                 label={one.label}
                 variant={one.id === current ? 'primary' : 'secondary'}
-                onPress={() => choose($, one.id)}
+                onPress={async () => {
+                  await choose($, one.id)
+                }}
               />
             ))}
           </Box>
