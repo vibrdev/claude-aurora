@@ -1,6 +1,6 @@
 {
   "name": "aurora",
-  "version": "0.1.2",
-  "description": "A drifting aurora backdrop with switchable scenes, a last-turn band above the prompt, and a session panel of tools used and files changed.",
+  "version": "0.2.0",
+  "description": "A full look for the Code tab: an illustrated dusk or aurora-night scene with matching colours, plus a bar showing the prompt cache countdown, context fill and usage limits.",
   "types": "./types/index.d.ts"
 }

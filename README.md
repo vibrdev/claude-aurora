@@ -1,11 +1,10 @@
 # Aurora
 
-A mod for Claude Code that changes how the app looks and adds a little session awareness.
+A mod for Claude Code that gives the desktop app's Code tab a full look and a bar of things worth knowing while you work. The look needs Claude Code 2.1.324 or later in the desktop or mobile app.
 
-- **Backdrop.** A slowly drifting field of soft lights behind the conversation, with the app's panels frosted over it. Drawn in the desktop and mobile apps.
-- **Scenes.** Aurora, Dusk, Tide, Ember and Paper. `/scene` steps to the next one, `/scene dusk` picks by name. The choice is remembered across sessions.
-- **Band above the prompt.** After each turn: how long it took, how many tool calls it made, and how many files have changed this session.
-- **Session panel.** `/aurora` opens a panel with the scene picker, turn count and average time, the most-used tools and the latest changed files.
+- **Looks.** Dusk: a sunset behind plum ridges under the first stars, with pink and amber accents. Night: a moon and slow aurora curtains over a navy ridge, with teal accents. Each recolours the whole Code tab and its code highlighting to match. `/scene` switches, `/scene night` picks by name, and the choice is remembered across sessions.
+- **Bar above the prompt.** A countdown to when the prompt cache expires (and how many tokens the next message would re-read once it has), how full the context window is, how much of the 5-hour limit is used and when it resets, and the last turn's time and cache hit rate.
+- **Session panel.** `/aurora` or the bar's Details button: the look picker, the cache lifetime to count against (1 hour or 5 minutes), context and limits, tokens and cost, the most-used tools and the latest changed files.
 - **Long-turn toast.** A "Finished in 2m 14s" toast when a turn takes over 90 seconds.
 
 ## Install
