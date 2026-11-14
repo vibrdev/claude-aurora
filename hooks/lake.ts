@@ -35,13 +35,14 @@ function sky(): string {
   return (
     `<rect width="${W}" height="${HORIZON + 2}" fill="url(#sky)"/>` +
     `<ellipse cx="${SUN_X}" cy="${HORIZON - 14}" rx="700" ry="330" fill="url(#glow)"/>` +
-    clouds(51, 70, 150, 470, [70, 240], 'cPink', 0.75) +
-    clouds(23, 90, 280, 555, [50, 200], 'cLit', 0.85) +
-    clouds(7, 120, -30, 420, [90, 300], 'cDark', 0.95) +
-    clouds(19, 50, 340, 545, [40, 140], 'cGold', 0.7) +
-    // Bright streaks that drift under the deck, so the sky is never quite still.
-    `<g>${streak(420, 505, 330, 7)}${streak(1150, 470, 420, 8)}${streak(1400, 380, 300, 6)}${move('translate', ['-320 0', '320 0', '-320 0'], 36)}</g>` +
-    `<g>${streak(820, 540, 380, 6)}${streak(250, 440, 260, 6)}${streak(640, 330, 340, 5)}${move('translate', ['300 0', '-300 0', '300 0'], 52)}</g>` +
+    clouds(51, 34, 150, 460, [110, 320], 'cPink', 0.75) +
+    clouds(23, 44, 280, 520, [80, 260], 'cLit', 0.85) +
+    clouds(7, 56, -30, 410, [140, 420], 'cDark', 0.95) +
+    clouds(19, 24, 340, 515, [60, 190], 'cGold', 0.7) +
+    // Bright streaks of light under the deck. They hold still: anything that moves
+    // over the clouds makes the app redraw the clouds too, every frame.
+    streak(420, 505, 330, 7) + streak(1150, 470, 420, 8) + streak(1400, 380, 300, 6) +
+    streak(820, 540, 380, 6) + streak(250, 440, 260, 6) + streak(640, 330, 340, 5) +
     `<circle cx="${SUN_X}" cy="${SUN_Y}" r="84" fill="url(#sunHalo)">${loop('r', [74, 118, 74], 5)}</circle>` +
     `<circle cx="${SUN_X}" cy="${SUN_Y}" r="21" fill="#fff8e0"/>`
   )
@@ -107,7 +108,7 @@ function water(): string {
   // foot. Each glint flickers by itself, and they slide in six groups out of step.
   const groups = ['', '', '', '', '', '']
 
-  for (let i = 0; i < 66; i += 1) {
+  for (let i = 0; i < 54; i += 1) {
     const t = random() ** 1.6
     const y = HORIZON + 8 + t * 380
     const spread = 14 + t * 230
@@ -127,7 +128,7 @@ function water(): string {
   // Ripples over the whole lake, not only under the sun: thin lines of sky light
   // that slide and fade, so the water moves at the edges of the window too.
   const sets = ['', '', '', '']
-  for (let i = 0; i < 32; i += 1) {
+  for (let i = 0; i < 24; i += 1) {
     const t = random() ** 1.3
     const y = HORIZON + 14 + t * 370
     const width = 30 + t * (60 + random() * 150)
@@ -167,7 +168,7 @@ function foreground(): string {
 
   const reeds: string[] = ['', '', '']
   for (let i = 0; i < 66; i += 1) {
-    reeds[i % 3] += blade(30 + random() ** 1.3 * 520, 790 + random() * 230, 130 + random() * 260, (random() - 0.4) * 46, 1.2 + random() * 1.8)
+    reeds[i % 3] += blade(30 + random() ** 1.3 * 520, 800 + random() * 220, 120 + random() * 200, (random() - 0.4) * 46, 1.2 + random() * 1.8)
   }
 
   let pads = ''
