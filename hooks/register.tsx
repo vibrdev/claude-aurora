@@ -10,9 +10,9 @@ const PANE = 'aurora-session'
 const PANE_TITLE = 'Session'
 const LONG_TURN_MS = 90_000
 const TICK_MS = 30_000
-// No blur: the scene is as sharp behind the conversation as beside it, and the
-// panels only lay a thin veil of the look's own color over it for the words.
-const GLASS = { blur: 0, opacity: 0.42 }
+// No blur, so the scene is as sharp behind the conversation as beside it; the
+// panels lay a veil of the look's own page color over it, dark enough to read on.
+const GLASS = { blur: 0, opacity: 0.74 }
 
 const NO_STATS: Stats = {
   turns: 0,
@@ -101,7 +101,7 @@ function shortPath(path: string): string {
  * spelling is tried second.
  */
 async function paint($: EngineInterface, look: Look): Promise<string | undefined> {
-  const now: ThemeSetArgs = { colors: look.colors, backdrop: { scene: look.id, glass: GLASS } }
+  const now: ThemeSetArgs = { colors: look.colors, backdrop: { scene: look.id, glass: { ...GLASS, tint: look.veil } } }
   const before = { backdrop: { id: look.id, glass: GLASS } } as unknown as ThemeSetArgs
   let refusal = 'this build has no themes'
 

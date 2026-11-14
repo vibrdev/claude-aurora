@@ -9,6 +9,8 @@ export type Look = {
   /** One line for the picker. */
   about: string
   colors: ThemeColors
+  /** The look's page color, laid as a veil between the scene and the words. */
+  veil: string
   /** A line that would stop the desktop app painting the colors, if any. */
   unpainted: string | undefined
 }
@@ -21,6 +23,7 @@ function look(id: SceneId, label: string, about: string, definition: Parameters<
     label,
     about,
     colors: theme,
+    veil: definition.dark?.gray?.anchors?.['surface-0'] ?? '#12131e',
     unpainted: problems.find(line => line.startsWith("Desktop won't paint")),
   }
 }
