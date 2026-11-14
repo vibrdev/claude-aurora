@@ -92,6 +92,7 @@ test('the band counts the prompt cache down and goes cold', async ($, on) => {
     expect((await band.find({ type: 'Text', text: /Context/ }))?.text).toMatch(/Context 42% ▰▰▰▰▱▱▱▱▱▱/)
     expect((await band.find({ type: 'Text', text: /5h limit/ }))?.text).toMatch(/5h limit 32%/)
     expect((await band.find({ type: 'Text', text: /Last turn/ }))?.text).toBe('Last turn 42s · 90% cached')
+    expect((await band.find({ type: 'Text', text: /tokens$/ }))?.text).toBe('11k tokens')
     await band.unmount()
   }
 

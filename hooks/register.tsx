@@ -283,39 +283,34 @@ export const register: Register = on => {
 
     return (
       <Box gap="md" alignItems="center" flexWrap="wrap">
-        {e.props.isWorking ? (
-          <Text size="caption" color="success">
-            ● Cache in use
-          </Text>
-        ) : remaining === null ? (
-          <Text size="caption" dimColor>
-            ○ Cache not started
-          </Text>
-        ) : remaining <= 0 ? (
-          <Text size="caption" color="error">
-            ○ Cache cold{resend}
-          </Text>
-        ) : remaining <= Math.min(5, minutes / 5) * 60_000 ? (
-          <Text size="caption" color="warning" tabular>
-            ◐ Cache expires in {left(remaining)}
-          </Text>
-        ) : (
-          <Text size="caption" color="success" tabular>
-            ● Cache warm · {left(remaining)} left
-          </Text>
-        )}
+        <Text size="caption" color="text" tabular>
+          {e.props.isWorking
+            ? '● Cache in use'
+            : remaining === null
+              ? '○ Cache not started'
+              : remaining <= 0
+                ? `○ Cache cold${resend}`
+                : remaining <= Math.min(5, minutes / 5) * 60_000
+                  ? `◐ Cache expires in ${left(remaining)}`
+                  : `● Cache warm · ${left(remaining)} left`}
+        </Text>
         {session.contextPercent !== null && (
-          <Text size="caption" tabular color={level(session.contextPercent)} dimColor={level(session.contextPercent) === undefined}>
+          <Text size="caption" color="text" tabular>
             Context {session.contextPercent}% {bar(session.contextPercent)}
           </Text>
         )}
         {fiveHour !== undefined && (
-          <Text size="caption" tabular color={level(fiveHour.percentUsed)} dimColor={level(fiveHour.percentUsed) === undefined}>
+          <Text size="caption" color="text" tabular>
             {limitName(fiveHour.kind)} {Math.round(fiveHour.percentUsed)}%{resets === undefined ? '' : ` · resets ${resets}`}
           </Text>
         )}
         {turns.turns > 0 && (
-          <Text size="caption" dimColor tabular>
+          <Text size="caption" color="text" tabular>
+            {count(turns.tokensIn + turns.tokensOut)} tokens
+          </Text>
+        )}
+        {turns.turns > 0 && (
+          <Text size="caption" color="text" tabular>
             Last turn {span(turns.lastMs)}
             {turns.lastCachedPercent === null ? '' : ` · ${turns.lastCachedPercent}% cached`}
           </Text>
