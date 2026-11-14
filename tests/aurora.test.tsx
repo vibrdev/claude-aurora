@@ -1,5 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 
+import { sceneSvg } from '../hooks/scenes'
+
 const BAND = {
   plugin: 'aurora',
   component: 'AbovePrompt',
@@ -45,7 +47,7 @@ test('session start sends colors and scene together, and the scene draws', async
       component: 'Backdrop',
       requestId: 'backdrop',
       surface,
-      props: { scene: surface === 'desktop' ? 'lake' : 'dusk', plugin: 'aurora', glass: { blur: 6, opacity: 0.5 } } as never,
+      props: { scene: surface === 'desktop' ? 'lake' : 'dusk', plugin: 'aurora', glass: { blur: 0, opacity: 0.42 } } as never,
     })
 
     expect(await ui.find({ type: 'Svg' })).toBeDefined()
@@ -120,4 +122,16 @@ test('the band counts the prompt cache down and goes cold', async ($, on) => {
   const soon = await $.ui.mount({ ...BAND, surface: 'desktop' })
   expect((await soon.find({ type: 'Text', text: /Cache/ }))?.text).toBe('● Cache warm · 5m left')
   await soon.unmount()
+})
+
+test('every scene fits the Svg limit and moves without CSS', () => {
+  for (const id of ['dusk', 'night', 'lake'] as const) {
+    const svg = sceneSvg(id)
+
+    // The app refuses an Svg source past 131,072 characters, and its scene frame
+    // applies no style block, so the motion has to be SMIL.
+    expect(svg.length).toBeLessThan(131_072)
+    expect(svg.includes('<style')).toBe(false)
+    expect(svg.includes('<animate')).toBe(true)
+  }
 })

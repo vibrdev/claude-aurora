@@ -1,4 +1,5 @@
 import { lake } from './lake'
+import { TRAIL, loop, move, n, seeded, shootingStar } from './smil'
 
 // The scenes behind the conversation: each one a self-contained SVG, drawn in a
 // 1600 by 1000 box and sliced to fill any window. The middle is kept calm for
@@ -6,22 +7,6 @@ import { lake } from './lake'
 
 const W = 1600
 const H = 1000
-
-/** A small seeded generator, so a scene is the same on every draw. */
-function seeded(seed: number): () => number {
-  let state = seed >>> 0
-
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0
-    let t = state
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
-const n = (value: number): string => value.toFixed(1).replace(/\.0$/, '')
 
 /** A ridge line across the box: summed waves plus a little grit, closed to the foot. */
 function ridge(seed: number, base: number, height: number, rough: number, fill: string): string {
@@ -52,39 +37,23 @@ function stars(seed: number, count: number, lowest: number, color: string): stri
     const y = random() * random() * lowest
     const big = random() > 0.9
     const r = big ? 1.5 + random() * 0.9 : 0.5 + random() * 0.8
-    out += `<circle class="s s${i % 5}" cx="${n(x)}" cy="${n(y)}" r="${n(r)}" fill="${color}"/>`
+    const period = 4 + random() * 8
+
+    out +=
+      `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r)}" fill="${color}">` +
+      loop('opacity', [0.25, 1, 0.25], period, random() * period) +
+      `</circle>`
   }
 
   return out
 }
 
-const STYLE =
-  '.s{animation:tw 5s ease-in-out infinite}.s1{animation-duration:7s;animation-delay:-2s}' +
-  '.s2{animation-duration:9s;animation-delay:-5s}.s3{animation-duration:6s;animation-delay:-1s}' +
-  '.s4{animation-duration:11s;animation-delay:-7s}@keyframes tw{0%,100%{opacity:.25}50%{opacity:1}}' +
-  '.shoot{opacity:0;animation:shoot 23s linear infinite}' +
-  '@keyframes shoot{0%,91%{opacity:0;transform:translate(0,0)}92%{opacity:.9}' +
-  '96%{opacity:0;transform:translate(-340px,150px)}100%{opacity:0;transform:translate(-340px,150px)}}' +
-  '.drift{animation:drift 140s ease-in-out infinite}.drift2{animation:drift 200s ease-in-out infinite reverse}' +
-  '@keyframes drift{0%,100%{transform:translateX(-260px)}50%{transform:translateX(260px)}}' +
-  '.pulse{animation:pulse 9s ease-in-out infinite}@keyframes pulse{0%,100%{opacity:.75}50%{opacity:1}}' +
-  '.wave{transform-box:fill-box;transform-origin:center;animation:wave 26s ease-in-out infinite}' +
-  '.wave2{animation-duration:34s;animation-delay:-9s}.wave3{animation-duration:42s;animation-delay:-20s}' +
-  '@keyframes wave{0%,100%{transform:translateX(-50px) skewX(-5deg) scaleY(1);opacity:.55}' +
-  '50%{transform:translateX(60px) skewX(6deg) scaleY(1.12);opacity:1}}' +
-  '@media (prefers-reduced-motion:reduce){*{animation:none!important}}'
-
 function frame(body: string, defs: string): string {
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice">` +
-    `<defs>${defs}</defs><style>${STYLE}</style>${body}</svg>`
+    `<defs>${defs}</defs>${body}</svg>`
   )
 }
-
-const SHOOTING_STAR =
-  '<g class="shoot"><line x1="1180" y1="110" x2="1250" y2="80" stroke="url(#trail)" stroke-width="2.2" stroke-linecap="round"/></g>'
-const TRAIL =
-  '<linearGradient id="trail" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
 
 /** Dusk: the last of the sun behind a plum ridge, the first stars out above it. */
 function dusk(): string {
@@ -126,12 +95,15 @@ function dusk(): string {
   const body =
     `<rect width="${W}" height="${H}" fill="url(#sky)"/>` +
     stars(11, 120, 560, '#ffe9f4') +
-    SHOOTING_STAR +
-    `<g class="drift"><rect x="150" y="520" width="760" height="7" rx="3.5" fill="url(#cloud)"/>` +
-    `<rect x="620" y="585" width="900" height="9" rx="4.5" fill="url(#cloud)"/></g>` +
-    `<g class="drift2"><rect x="-80" y="640" width="820" height="8" rx="4" fill="url(#cloud)"/>` +
-    `<rect x="900" y="470" width="620" height="5" rx="2.5" fill="url(#cloud)"/></g>` +
-    `<circle class="pulse" cx="${sunX}" cy="${sunY}" r="${sunR * 3}" fill="url(#halo)"/>` +
+    shootingStar(1180, 110, 23) +
+    `<g><rect x="150" y="520" width="760" height="7" rx="3.5" fill="url(#cloud)"/>` +
+    `<rect x="620" y="585" width="900" height="9" rx="4.5" fill="url(#cloud)"/>` +
+    move('translate', ['-260 0', '260 0', '-260 0'], 90) +
+    `</g><g><rect x="-80" y="640" width="820" height="8" rx="4" fill="url(#cloud)"/>` +
+    `<rect x="900" y="470" width="620" height="5" rx="2.5" fill="url(#cloud)"/>` +
+    move('translate', ['240 0', '-240 0', '240 0'], 130) +
+    `</g>` +
+    `<circle cx="${sunX}" cy="${sunY}" r="${sunR * 3}" fill="url(#halo)">${loop('opacity', [0.7, 1, 0.7], 9)}</circle>` +
     `<circle cx="${sunX}" cy="${sunY}" r="${sunR}" fill="url(#sun)" mask="url(#cut)"/>` +
     ridge(3, horizon + 6, 150, 5, '#5b2162') +
     ridge(7, horizon + 30, 120, 7, '#38144a') +
@@ -145,10 +117,13 @@ function dusk(): string {
 /** Night: a moon over a navy ridge, with aurora curtains moving slowly above it. */
 function night(): string {
   const horizon = 790
-  const curtain = (x: number, width: number, top: number, id: string, cls: string): string =>
-    `<path class="wave ${cls}" fill="url(#${id})" filter="url(#soft)" d="M${x},${horizon - 40} ` +
+  const curtain = (x: number, width: number, top: number, id: string, seconds: number, ago: number): string =>
+    `<g>${loop('opacity', [0.5, 1, 0.5], seconds * 0.7, ago)}` +
+    `<path fill="url(#${id})" filter="url(#soft)" d="M${x},${horizon - 40} ` +
     `C${n(x + width * 0.2)},${top + 220} ${n(x + width * 0.1)},${top + 60} ${n(x + width * 0.35)},${top} ` +
-    `C${n(x + width * 0.6)},${top + 40} ${n(x + width * 0.75)},${top + 200} ${x + width},${horizon - 60} Z"/>`
+    `C${n(x + width * 0.6)},${top + 40} ${n(x + width * 0.75)},${top + 200} ${x + width},${horizon - 60} Z">` +
+    move('translate', ['-70 0', '80 0', '-70 0'], seconds, ago) +
+    `</path></g>`
 
   const defs =
     '<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">' +
@@ -167,11 +142,11 @@ function night(): string {
   const body =
     `<rect width="${W}" height="${H}" fill="url(#sky)"/>` +
     stars(29, 170, 700, '#eaf6ff') +
-    SHOOTING_STAR +
-    curtain(40, 620, 150, 'a1', '') +
-    curtain(480, 700, 90, 'a2', 'wave2') +
-    curtain(980, 640, 190, 'a1', 'wave3') +
-    `<circle class="pulse" cx="1290" cy="230" r="150" fill="url(#halo)"/>` +
+    shootingStar(1080, 130, 19) +
+    curtain(40, 620, 150, 'a1', 24, 0) +
+    curtain(480, 700, 90, 'a2', 31, 9) +
+    curtain(980, 640, 190, 'a1', 38, 20) +
+    `<circle cx="1290" cy="230" r="150" fill="url(#halo)">${loop('opacity', [0.7, 1, 0.7], 9)}</circle>` +
     `<circle cx="1290" cy="230" r="44" fill="#f2f8ff"/><circle cx="1268" cy="214" r="41" fill="#060d1c"/>` +
     ridge(5, horizon + 4, 170, 6, '#12304a') +
     ridge(13, horizon + 36, 130, 8, '#0b2036') +

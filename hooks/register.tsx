@@ -10,8 +10,9 @@ const PANE = 'aurora-session'
 const PANE_TITLE = 'Session'
 const LONG_TURN_MS = 90_000
 const TICK_MS = 30_000
-// Light glass: the scene stays sharp behind the panels, which keep the look's own color.
-const GLASS = { blur: 6, opacity: 0.5 }
+// No blur: the scene is as sharp behind the conversation as beside it, and the
+// panels only lay a thin veil of the look's own color over it for the words.
+const GLASS = { blur: 0, opacity: 0.42 }
 
 const NO_STATS: Stats = {
   turns: 0,
