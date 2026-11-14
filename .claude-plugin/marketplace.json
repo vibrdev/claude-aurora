@@ -1,0 +1,5 @@
+{
+  "name": "claude-aurora",
+  "owner": { "name": "vibrdev" },
+  "plugins": [{ "name": "aurora", "source": "./" }]
+}
