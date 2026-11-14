@@ -12,7 +12,7 @@ const LONG_TURN_MS = 90_000
 const TICK_MS = 30_000
 // No blur, so the scene is as sharp behind the conversation as beside it; the
 // panels lay a veil of the look's own page color over it, dark enough to read on.
-const GLASS = { blur: 0, opacity: 0.74 }
+const GLASS = { blur: 0, opacity: 0.64 }
 
 const NO_STATS: Stats = {
   turns: 0,

@@ -47,9 +47,9 @@ function sky(): string {
     mask('mDark', 0, 560) +
     layer('cDark', 0, 560, 'mDark') +
     // Bright streaks that drift under the deck, so the sky is never quite still.
-    `<g>${streak(420, 505, 330, 6)}${streak(1150, 470, 420, 7)}${move('translate', ['-240 0', '240 0', '-240 0'], 80)}</g>` +
-    `<g>${streak(820, 540, 380, 5)}${streak(250, 440, 260, 5)}${move('translate', ['220 0', '-220 0', '220 0'], 110)}</g>` +
-    `<circle cx="${SUN_X}" cy="${SUN_Y}" r="84" fill="url(#sunHalo)">${loop('r', [78, 96, 78], 7)}</circle>` +
+    `<g>${streak(420, 505, 330, 7)}${streak(1150, 470, 420, 8)}${streak(1400, 380, 300, 6)}${move('translate', ['-320 0', '320 0', '-320 0'], 36)}</g>` +
+    `<g>${streak(820, 540, 380, 6)}${streak(250, 440, 260, 6)}${streak(640, 330, 340, 5)}${move('translate', ['300 0', '-300 0', '300 0'], 52)}</g>` +
+    `<circle cx="${SUN_X}" cy="${SUN_Y}" r="84" fill="url(#sunHalo)">${loop('r', [74, 118, 74], 5)}</circle>` +
     `<circle cx="${SUN_X}" cy="${SUN_Y}" r="21" fill="#fff8e0"/>`
   )
 }
@@ -62,12 +62,14 @@ function birds(): string {
     return `<path d="${up}">${loop('d', [up, down, up], flap)}</path>`
   }
 
-  return (
-    `<g fill="none" stroke="#17121c" stroke-width="1.8" stroke-linecap="round">` +
-    bird(0, 250, 10, 0.9) + bird(36, 238, 8, 1.1) + bird(62, 264, 9, 0.8) + bird(100, 246, 7, 1) +
-    move('translate', ['-180 40', '1780 -70'], 70) +
+  const flock = (y: number, scale: number, seconds: number, ago: number): string =>
+    `<g fill="none" stroke="#17121c" stroke-width="${n(2.4 * scale)}" stroke-linecap="round">` +
+    bird(0, y, 13 * scale, 0.9) + bird(46 * scale, y - 14, 10 * scale, 1.1) + bird(80 * scale, y + 16, 12 * scale, 0.8) +
+    bird(128 * scale, y - 4, 9 * scale, 1) + bird(170 * scale, y + 22, 10 * scale, 0.95) +
+    move('translate', ['-260 40', '1780 -70'], seconds, ago) +
     `</g>`
-  )
+
+  return flock(250, 1, 34, 6) + flock(150, 0.7, 47, 30)
 }
 
 function shore(): string {
@@ -121,12 +123,30 @@ function water(): string {
     const period = 2.4 + random() * 3.6
 
     groups[i % 6] +=
-      `<rect x="${n(x)}" y="${n(y)}" width="${n(width)}" height="${n(1.2 + t * 3)}" rx="1.5" opacity="0.1">` +
-      loop('opacity', [0.06, n(0.55 + random() * 0.45), 0.06], period, random() * period, false) +
+      `<rect x="${n(x)}" y="${n(y)}" width="${n(width)}" height="${n(1.6 + t * 3.6)}" rx="2" opacity="0.1">` +
+      loop('opacity', [0.05, n(0.75 + random() * 0.25), 0.05], period, random() * period, false) +
       `</rect>`
   }
   const glints = groups
-    .map((rects, i) => `<g>${rects}${move('translate', [`${-5 - i * 2} 0`, `${5 + i * 2} 0`, `${-5 - i * 2} 0`], 5 + i * 1.7, i)}</g>`)
+    .map((rects, i) => `<g>${rects}${move('translate', [`${-12 - i * 4} 0`, `${12 + i * 4} 0`, `${-12 - i * 4} 0`], 3 + i * 0.9, i)}</g>`)
+    .join('')
+
+  // Ripples over the whole lake, not only under the sun: thin lines of sky light
+  // that slide and fade, so the water moves at the edges of the window too.
+  const sets = ['', '', '', '']
+  for (let i = 0; i < 64; i += 1) {
+    const t = random() ** 1.3
+    const y = HORIZON + 14 + t * 370
+    const width = 30 + t * (60 + random() * 150)
+    const period = 3 + random() * 4
+
+    sets[i % 4] +=
+      `<rect x="${n(random() * (W + 200) - 100)}" y="${n(y)}" width="${n(width)}" height="${n(1 + t * 2)}" rx="1.5" opacity="0.05">` +
+      loop('opacity', [0.03, n(0.22 + random() * 0.3), 0.03], period, random() * period, false) +
+      `</rect>`
+  }
+  const ripples = sets
+    .map((rects, i) => `<g>${rects}${move('translate', [`${-40 - i * 14} 0`, `${40 + i * 14} 0`, `${-40 - i * 14} 0`], 7 + i * 2.3, i * 2)}</g>`)
     .join('')
 
   return (
@@ -137,6 +157,7 @@ function water(): string {
     // The far shore and trees, mirrored and dimmed.
     `<rect y="${HORIZON}" width="${W}" height="16" fill="url(#shade)"/>` +
     `<ellipse cx="1420" cy="${HORIZON + 4}" rx="330" ry="150" fill="url(#treeShade)"/>` +
+    `<g fill="#f3c6d2">${ripples}</g>` +
     `<g fill="#ffe2ae">${glints}</g>`
   )
 }
@@ -146,8 +167,8 @@ function foreground(): string {
   // A blade that leans about its own foot, so a stand of them moves like grass in
   // a light wind and not like one stiff sheet.
   const blade = (x: number, base: number, height: number, lean: number, width: number): string => {
-    const period = 5 + random() * 6
-    const swing = 1.2 + random() * 1.6
+    const period = 3.2 + random() * 3.6
+    const swing = 2.4 + random() * 2.6
 
     return (
       `<path d="M${n(x)},${n(base)} q${n(lean * 0.2)},${n(-height * 0.6)} ${n(lean)},${n(-height)}" stroke-width="${n(width)}">` +

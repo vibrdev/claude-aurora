@@ -47,7 +47,7 @@ test('session start sends colors and scene together, and the scene draws', async
       component: 'Backdrop',
       requestId: 'backdrop',
       surface,
-      props: { scene: surface === 'desktop' ? 'lake' : 'dusk', plugin: 'aurora', glass: { blur: 0, opacity: 0.74 } } as never,
+      props: { scene: surface === 'desktop' ? 'lake' : 'dusk', plugin: 'aurora', glass: { blur: 0, opacity: 0.64 } } as never,
     })
 
     expect(await ui.find({ type: 'Svg' })).toBeDefined()
