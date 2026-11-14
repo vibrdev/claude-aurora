@@ -1,9 +1,11 @@
 import { loop, move, n, seeded } from './smil'
 
 // Lake: a sunset over still water, drawn closer to a photograph than the other
-// scenes. The cloud deck and the water's grain are noise the renderer makes once;
-// everything that moves (glints, reeds, birds, light on the clouds) is plain
-// shapes, each carrying its own motion.
+// scenes. Everything is plain shapes and gradients: the desktop app stops
+// animating a scene whose markup holds a noise filter, even an unused one, and
+// it redraws the backdrop without the graphics card, so blur and large moving
+// areas make it stutter. The clouds are soft gradient ellipses, and what moves is
+// either small (glints, birds) or moves as a few whole groups (reeds, grass).
 
 const W = 1600
 const H = 1000
@@ -11,41 +13,32 @@ const HORIZON = 600
 const SUN_X = 640
 const SUN_Y = HORIZON - 20
 
-/** A noise filter that paints one color where the noise is high: clouds, grain. */
-function noise(id: string, frequency: string, octaves: number, seed: number, rgb: [number, number, number], gain: number, cut: number): string {
-  const [r, g, b] = rgb.map(one => (one / 255).toFixed(3)) as [string, string, string]
+/** One layer of cloud: soft-edged ellipses scattered across a band of sky. */
+function clouds(seed: number, count: number, top: number, bottom: number, size: [number, number], fill: string, opacity: number): string {
+  const random = seeded(seed)
+  let out = ''
 
-  return (
-    `<filter id="${id}" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">` +
-    `<feTurbulence type="fractalNoise" baseFrequency="${frequency}" numOctaves="${octaves}" seed="${seed}"/>` +
-    `<feColorMatrix values="0 0 0 0 ${r} 0 0 0 0 ${g} 0 0 0 0 ${b} ${gain} 0 0 0 ${cut}"/></filter>`
-  )
-}
+  for (let i = 0; i < count; i += 1) {
+    const x = random() * (W + 500) - 250
+    const y = top + random() ** 1.4 * (bottom - top)
+    const rx = size[0] + random() * (size[1] - size[0])
+    out += `<ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(rx)}" ry="${n(rx * (0.07 + random() * 0.1))}"/>`
+  }
 
-function fade(id: string, stops: [number, number][]): string {
-  const marks = stops.map(([at, level]) => `<stop offset="${at}" stop-color="#fff" stop-opacity="${level}"/>`).join('')
-
-  return `<linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1">${marks}</linearGradient>`
+  return `<g fill="url(#${fill})" opacity="${opacity}">${out}</g>`
 }
 
 function sky(): string {
-  const layer = (filter: string, y: number, height: number, maskId: string): string =>
-    `<g mask="url(#${maskId})"><rect x="0" y="${y}" width="${W}" height="${height}" filter="url(#${filter})"/></g>`
-  const mask = (id: string, y: number, height: number): string =>
-    `<mask id="${id}" maskUnits="userSpaceOnUse" x="0" y="${y}" width="${W}" height="${height}">` +
-    `<rect x="0" y="${y}" width="${W}" height="${height}" fill="url(#${id}g)"/></mask>`
   const streak = (cx: number, cy: number, rx: number, ry: number): string =>
     `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#streak)"/>`
 
   return (
     `<rect width="${W}" height="${HORIZON + 2}" fill="url(#sky)"/>` +
-    `<ellipse cx="${SUN_X}" cy="${HORIZON - 14}" rx="700" ry="330" fill="url(#glow)">${loop('opacity', [0.72, 1, 0.72], 10)}</ellipse>` +
-    mask('mPink', 120, 480) +
-    layer('cPink', 120, 480, 'mPink') +
-    mask('mLit', 240, 360) +
-    layer('cLit', 240, 360, 'mLit') +
-    mask('mDark', 0, 560) +
-    layer('cDark', 0, 560, 'mDark') +
+    `<ellipse cx="${SUN_X}" cy="${HORIZON - 14}" rx="700" ry="330" fill="url(#glow)"/>` +
+    clouds(51, 70, 150, 470, [70, 240], 'cPink', 0.75) +
+    clouds(23, 90, 280, 555, [50, 200], 'cLit', 0.85) +
+    clouds(7, 120, -30, 420, [90, 300], 'cDark', 0.95) +
+    clouds(19, 50, 340, 545, [40, 140], 'cGold', 0.7) +
     // Bright streaks that drift under the deck, so the sky is never quite still.
     `<g>${streak(420, 505, 330, 7)}${streak(1150, 470, 420, 8)}${streak(1400, 380, 300, 6)}${move('translate', ['-320 0', '320 0', '-320 0'], 36)}</g>` +
     `<g>${streak(820, 540, 380, 6)}${streak(250, 440, 260, 6)}${streak(640, 330, 340, 5)}${move('translate', ['300 0', '-300 0', '300 0'], 52)}</g>` +
@@ -99,7 +92,7 @@ function shore(): string {
 
   return (
     `<polygon fill="#191320" points="-40,${HORIZON + 4} ${far.join(' ')} ${W + 40},${HORIZON + 4}"/>` +
-    `<g fill="#0d0a12" filter="url(#rough)">${trees}</g>` +
+    `<g fill="#0d0a12">${trees}</g>` +
     `<g fill="none" stroke="#0d0a12" stroke-width="2.4" stroke-linecap="round">${trunks}</g>` +
     // The jetty, small and far, with its posts.
     `<g fill="#0e0b13"><rect x="452" y="${HORIZON + 5}" width="128" height="4"/>` +
@@ -114,7 +107,7 @@ function water(): string {
   // foot. Each glint flickers by itself, and they slide in six groups out of step.
   const groups = ['', '', '', '', '', '']
 
-  for (let i = 0; i < 114; i += 1) {
+  for (let i = 0; i < 66; i += 1) {
     const t = random() ** 1.6
     const y = HORIZON + 8 + t * 380
     const spread = 14 + t * 230
@@ -134,7 +127,7 @@ function water(): string {
   // Ripples over the whole lake, not only under the sun: thin lines of sky light
   // that slide and fade, so the water moves at the edges of the window too.
   const sets = ['', '', '', '']
-  for (let i = 0; i < 64; i += 1) {
+  for (let i = 0; i < 32; i += 1) {
     const t = random() ** 1.3
     const y = HORIZON + 14 + t * 370
     const width = 30 + t * (60 + random() * 150)
@@ -151,9 +144,7 @@ function water(): string {
 
   return (
     `<rect y="${HORIZON}" width="${W}" height="${H - HORIZON}" fill="url(#water)"/>` +
-    `<ellipse cx="${SUN_X}" cy="${HORIZON}" rx="270" ry="430" fill="url(#column)">${loop('rx', [250, 300, 250], 8)}</ellipse>` +
-    `<rect y="${HORIZON}" width="${W}" height="${H - HORIZON}" filter="url(#grainLight)" opacity="0.5"/>` +
-    `<rect y="${HORIZON}" width="${W}" height="${H - HORIZON}" filter="url(#grainDark)" opacity="0.55"/>` +
+    `<ellipse cx="${SUN_X}" cy="${HORIZON}" rx="270" ry="430" fill="url(#column)"/>` +
     // The far shore and trees, mirrored and dimmed.
     `<rect y="${HORIZON}" width="${W}" height="16" fill="url(#shade)"/>` +
     `<ellipse cx="1420" cy="${HORIZON + 4}" rx="330" ry="150" fill="url(#treeShade)"/>` +
@@ -164,22 +155,19 @@ function water(): string {
 
 function foreground(): string {
   const random = seeded(5)
-  // A blade that leans about its own foot, so a stand of them moves like grass in
-  // a light wind and not like one stiff sheet.
-  const blade = (x: number, base: number, height: number, lean: number, width: number): string => {
-    const period = 3.2 + random() * 3.6
-    const swing = 2.4 + random() * 2.6
+  const blade = (x: number, base: number, height: number, lean: number, width: number): string =>
+    `<path d="M${n(x)},${n(base)} q${n(lean * 0.2)},${n(-height * 0.6)} ${n(lean)},${n(-height)}" stroke-width="${n(width)}"/>`
+  // A stand of blades leans as one, about the foot of the picture, like grass in a
+  // light wind: one moving group instead of a hundred, which the app redraws far
+  // more easily.
+  const sway = (blades: string[], degrees: number, seconds: number, ago: number): string =>
+    `<g transform="translate(0 ${H})"><g>` +
+    move('skewX', [`${-degrees}`, `${degrees}`, `${-degrees}`], seconds, ago) +
+    `<g transform="translate(0 ${-H})">${blades.join('')}</g></g></g>`
 
-    return (
-      `<path d="M${n(x)},${n(base)} q${n(lean * 0.2)},${n(-height * 0.6)} ${n(lean)},${n(-height)}" stroke-width="${n(width)}">` +
-      move('rotate', [`${n(-swing)} ${n(x)} ${n(base)}`, `${n(swing)} ${n(x)} ${n(base)}`, `${n(-swing)} ${n(x)} ${n(base)}`], period, random() * period, ' ') +
-      `</path>`
-    )
-  }
-
-  let reeds = ''
+  const reeds: string[] = ['', '', '']
   for (let i = 0; i < 66; i += 1) {
-    reeds += blade(30 + random() ** 1.3 * 520, 790 + random() * 230, 130 + random() * 260, (random() - 0.4) * 46, 1.2 + random() * 1.8)
+    reeds[i % 3] += blade(30 + random() ** 1.3 * 520, 790 + random() * 230, 130 + random() * 260, (random() - 0.4) * 46, 1.2 + random() * 1.8)
   }
 
   let pads = ''
@@ -208,18 +196,18 @@ function foreground(): string {
       `<ellipse cx="${n(x)}" cy="${n(y + ry * 0.75)}" rx="${n(rx * 1.02)}" ry="${n(ry * 0.4)}" fill="#07060b" opacity="0.7"/>` +
       `<ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(rx)}" ry="${n(ry)}" fill="url(#rock)" transform="rotate(${n((random() - 0.5) * 18)} ${n(x)} ${n(y)})"/>`
   }
-  let grass = ''
+  const grass: string[] = ['', '']
   for (let i = 0; i < 80; i += 1) {
     const t = random()
-    grass += blade(1500 - t * 300 + random() * 150, 660 + t * 330 + random() * 30, 26 + random() * 70 + t * 30, (random() - 0.65) * 40, 1.2 + random() * 1.6)
+    grass[i % 2] += blade(1500 - t * 300 + random() * 150, 660 + t * 330 + random() * 30, 26 + random() * 70 + t * 30, (random() - 0.65) * 40, 1.2 + random() * 1.6)
   }
 
   return (
     pads +
-    `<g fill="none" stroke="#0c0a10" stroke-linecap="round">${reeds}</g>` +
+    `<g fill="none" stroke="#0c0a10" stroke-linecap="round">${sway([reeds[0]!], 1.6, 6, 0)}${sway([reeds[1]!], 2.2, 7.5, 2)}${sway([reeds[2]!], 1.2, 5, 4)}</g>` +
     `<path fill="#0b0a0f" d="M1140,${HORIZON + 5} C1300,${HORIZON + 22} 1450,${HORIZON + 58} 1462,${HORIZON + 104} C1450,790 1290,900 1120,${H} L${W + 40},${H} L${W + 40},${HORIZON + 5} Z"/>` +
-    `<g filter="url(#rough2)">${rocks}</g>` +
-    `<g fill="none" stroke="#10130f" stroke-linecap="round">${grass}</g>`
+    rocks +
+    `<g fill="none" stroke="#10130f" stroke-linecap="round">${sway([grass[0]!], 1.4, 5.5, 1)}${sway([grass[1]!], 2, 7, 3)}</g>`
   )
 }
 
@@ -234,27 +222,19 @@ export function lake(): string {
     '<radialGradient id="sunHalo"><stop offset="0" stop-color="#fff3c4"/><stop offset="0.35" stop-color="#ffd27a" stop-opacity="0.8"/>' +
     '<stop offset="1" stop-color="#ffb35a" stop-opacity="0"/></radialGradient>' +
     '<radialGradient id="streak"><stop offset="0" stop-color="#ffd09a" stop-opacity="0.8"/><stop offset="1" stop-color="#ffd09a" stop-opacity="0"/></radialGradient>' +
-    noise('cDark', '0.0032 0.0105', 4, 7, [28, 27, 48], 3.1, -1.28) +
-    noise('cLit', '0.003 0.017', 4, 23, [255, 150, 92], 3.6, -1.55) +
-    noise('cPink', '0.0026 0.009', 4, 51, [196, 92, 122], 2.6, -1.2) +
-    fade('mDark', [[0, 1], [0.6, 0.85], [0.86, 0.3], [1, 0]]) +
-    fade('mLit', [[0, 0], [0.5, 0.9], [0.86, 1], [1, 0.5]]) +
-    fade('mPink', [[0, 0], [0.4, 0.8], [0.8, 0.5], [1, 0]]) +
+    '<radialGradient id="cPink"><stop offset="0" stop-color="#b45878"/><stop offset="0.45" stop-color="#b45878" stop-opacity="0.7"/><stop offset="1" stop-color="#b45878" stop-opacity="0"/></radialGradient>' +
+    '<radialGradient id="cLit"><stop offset="0" stop-color="#ff9a5e"/><stop offset="0.5" stop-color="#ff9a5e" stop-opacity="0.7"/><stop offset="1" stop-color="#ff9a5e" stop-opacity="0"/></radialGradient>' +
+    '<radialGradient id="cDark"><stop offset="0" stop-color="#1d1c33"/><stop offset="0.55" stop-color="#1d1c33" stop-opacity="0.7"/><stop offset="1" stop-color="#1d1c33" stop-opacity="0"/></radialGradient>' +
+    '<radialGradient id="cGold"><stop offset="0" stop-color="#ffcf8f"/><stop offset="0.45" stop-color="#ffcf8f" stop-opacity="0.7"/><stop offset="1" stop-color="#ffcf8f" stop-opacity="0"/></radialGradient>' +
     '<linearGradient id="water" x1="0" y1="0" x2="0" y2="1">' +
     '<stop offset="0" stop-color="#f2a45a"/><stop offset="0.08" stop-color="#cf6f4c"/>' +
     '<stop offset="0.3" stop-color="#7c4560"/><stop offset="0.62" stop-color="#2f2a45"/><stop offset="1" stop-color="#111320"/></linearGradient>' +
     '<radialGradient id="column"><stop offset="0" stop-color="#ffcf80" stop-opacity="0.8"/>' +
     '<stop offset="0.4" stop-color="#ff9a52" stop-opacity="0.32"/><stop offset="1" stop-color="#ff9a52" stop-opacity="0"/></radialGradient>' +
-    noise('grainLight', '0.0016 0.085', 3, 9, [255, 214, 170], 1.7, -0.92) +
-    noise('grainDark', '0.002 0.06', 3, 31, [18, 16, 30], 2.0, -0.95) +
     '<linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#191320" stop-opacity="0.85"/><stop offset="1" stop-color="#191320" stop-opacity="0"/></linearGradient>' +
     '<radialGradient id="treeShade"><stop offset="0" stop-color="#0d0a12" stop-opacity="0.8"/><stop offset="1" stop-color="#0d0a12" stop-opacity="0"/></radialGradient>' +
     '<linearGradient id="rock" x1="0.15" y1="0" x2="0.75" y2="1"><stop offset="0" stop-color="#57444a"/>' +
     '<stop offset="0.2" stop-color="#2e2731"/><stop offset="0.6" stop-color="#1a1720"/><stop offset="1" stop-color="#0c0a10"/></linearGradient>' +
-    '<filter id="rough" x="-6%" y="-6%" width="112%" height="112%"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="4" result="t"/>' +
-    '<feDisplacementMap in="SourceGraphic" in2="t" scale="13" xChannelSelector="R" yChannelSelector="G"/></filter>' +
-    '<filter id="rough2" x="-6%" y="-6%" width="112%" height="112%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="12" result="t"/>' +
-    '<feDisplacementMap in="SourceGraphic" in2="t" scale="16" xChannelSelector="R" yChannelSelector="G"/></filter>' +
     '<radialGradient id="edge" cx="0.5" cy="0.5" r="0.8"><stop offset="0.62" stop-color="#05040a" stop-opacity="0"/><stop offset="1" stop-color="#05040a" stop-opacity="0.6"/></radialGradient>'
 
   return (

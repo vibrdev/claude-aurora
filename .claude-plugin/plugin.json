@@ -1,6 +1,6 @@
 {
   "name": "aurora",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "A full look for the Code tab: an animated lake-sunset, dusk or aurora-night scene with matching colours, plus a bar showing the prompt cache countdown, context fill and usage limits.",
   "types": "./types/index.d.ts"
 }

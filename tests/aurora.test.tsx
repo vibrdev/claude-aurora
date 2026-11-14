@@ -133,5 +133,7 @@ test('every scene fits the Svg limit and moves without CSS', () => {
     expect(svg.length).toBeLessThan(131_072)
     expect(svg.includes('<style')).toBe(false)
     expect(svg.includes('<animate')).toBe(true)
+    // A noise filter anywhere in the markup stops the app animating the scene.
+    expect(/feTurbulence|feDisplacementMap/.test(svg)).toBe(false)
   }
 })
