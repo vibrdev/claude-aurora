@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { EngineInterface, Register, ThemeSetArgs } from 'claude-code'
 
 import type { Stats } from '../types'
 import { DEFAULT_SCENE, SCENES, findScene, nextScene, sceneSvg } from './scenes'
@@ -34,16 +34,28 @@ function shortPath(path: string): string {
 }
 
 /** Paints the scene behind the conversation. The glass keeps the app's own panel color, so text stays readable in light and dark. */
-/** Resolves to why nothing draws the backdrop, or undefined when a surface does. */
-async function paint($: EngineInterface, id: string): Promise<string | undefined> {
-  try {
-    const set = await $.theme.set({ backdrop: { id, glass: { blur: 28, opacity: 0.72 } } })
+const GLASS = { blur: 28, opacity: 0.72 }
 
-    return set.isDrawn ? undefined : set.reason
-  } catch (error) {
-    // A build without themes: everything else of the mod still works.
-    return error instanceof Error ? error.message : 'this build has no themes'
+/**
+ * Resolves to why nothing draws the backdrop, or undefined when a surface does.
+ * Claude Code 2.1.323 renamed the backdrop's `id` to `scene` and refuses the
+ * old name; earlier builds refuse the new one. So: the new spelling, then the old.
+ */
+async function paint($: EngineInterface, name: string): Promise<string | undefined> {
+  const spellings = [{ scene: name, glass: GLASS }, { id: name, glass: GLASS }]
+  let refusal = 'this build has no themes'
+
+  for (const backdrop of spellings) {
+    try {
+      const set = await $.theme.set({ backdrop } as unknown as ThemeSetArgs)
+
+      return set.isDrawn ? undefined : set.reason
+    } catch (error) {
+      refusal = error instanceof Error ? error.message : String(error)
+    }
   }
+
+  return refusal
 }
 
 async function choose($: EngineInterface, id: string): Promise<string | undefined> {
@@ -141,7 +153,8 @@ export const register: Register = on => {
   })
 
   on('ui.render', { component: 'Backdrop' }, ($, e, next) => {
-    const drawn = findScene(e.props.id)
+    const props = e.props as unknown as { scene?: unknown; id?: unknown }
+    const drawn = findScene(props.scene ?? props.id)
 
     if (e.surface === 'terminal' || drawn === undefined || e.props.plugin.split('@')[0] !== NAME) {
       return next(e)

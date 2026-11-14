@@ -22,7 +22,7 @@ test('session start sets the theme, and the backdrop draws on desktop and mobile
       component: 'Backdrop',
       requestId: 'backdrop',
       surface,
-      props: { id: 'aurora', plugin: 'aurora', glass: GLASS },
+      props: { id: 'aurora', scene: 'aurora', plugin: 'aurora', glass: GLASS } as never,
     })
 
     expect(await ui.find({ type: 'Svg' })).toBeDefined()
